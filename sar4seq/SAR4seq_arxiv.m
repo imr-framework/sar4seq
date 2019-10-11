@@ -1,69 +1,24 @@
 %% File details
-%
-%     1. Computes RF safety metrics for Pulseq sequences 
-%     a. For Pulseq sequences for deployment on Siemens scanners - 
-%     computes time averaged RF power for the sequence
-%     b. For Pulseq sequences for deployment on GE scanners (via TOPPE) -
-%     computes the whole body SAR in W/kg
-%     
-% 
-%    Parameters
-%    ----------
-%       seq_path : Path to Pulseq sequence file - string
-%       seq : Pulseq sequence object determining system parameters - seq
-%       object
-%       Sample_weight : weight of the sample being imaged - double
-% 
-%     Returns
-%     -------
-%       Time averaged RF power : double
-%       Whole body SAR : double
-%            
-%       
-% 
-% Copyright of the Board of Trustees of Columbia University in the City of New York
 
-function [RFwbg_tavg,RFhg_tavg,SARwbg_pred] = SAR4seq(seq_path,seq,Sample_weight)
 
 %% Paths 
 addpath(genpath('/Users/sairamgeethanath/Documents/Columbia/Github-SG/pulseq-master/'));
 addpath(genpath('.'));
 
+SiemensB1fact = 1.5;%need to explore this further
+GEB1fact = 1.1725;% need to explore this further
 
-if(nargin < 1)
-    seq_path = './seq_files/160_tse500ms.seq';
-    system = mr.opts('MaxGrad', 32, 'GradUnit', 'mT/m', ...
-    'MaxSlew', 130, 'SlewUnit', 'T/m/s', 'rfRingdownTime', 30e-6, ...
-    'rfDeadTime', 100e-6);
-    seq=mr.Sequence(system);
-    Sample_weight = 40;% kg
-elseif(nargin <2)
-    system = mr.opts('MaxGrad', 32, 'GradUnit', 'mT/m', ...
-    'MaxSlew', 130, 'SlewUnit', 'T/m/s', 'rfRingdownTime', 30e-6, ...
-    'rfDeadTime', 100e-6);
-    seq=mr.Sequence(system);
-    Sample_weight = 40;% kg
-elseif(nargin <3)
-    Sample_weight = 40;% kg
-end
-
-
-%% Constants
-SiemensB1fact = 1.5;%need to explore this further - B1+ factor
-GEB1fact = 1.1725;% need to explore this further - B1+ factor
-
-Wbody_weight = 103.45; %kg - from Visible Human Male
-Head_weight = 6.024;  %kg - from Visible Human Male
-
+Wbody_weight = 103.45; %kg
+Head_weight = 6.024; %kg
+Sample_weight = 40;% kg
 %% SAR limits
 SixMinThresh_wbg =4; %W/Kg
 TenSecThresh_wbg = 8;
 
 SixMinThresh_hg =3.2;%W/Kg
 TenSecThresh_hg = 6.4;
-
-if(~(exist('Qmat.mat','file')))
-    %% Load relevant model - ONLY once per site if somebody needs to explore the Q matrix formulation
+if(~exist('Q','var'))
+    %% Load relevant model - ONLY once per test
     dirname = uigetdir(''); %Load dir with files for EM model
     cdir = pwd;
     cd(dirname)
@@ -78,14 +33,14 @@ if(~(exist('Qmat.mat','file')))
     %% Compute and store Q matrices once- if not done already - per model - will write relevant qmat files
     tic;
     Q = Q_mat_gen('Global', model,0);
-    save('Qmat.mat','Q');
     toc;
-else
-    load('Qmat.mat','Q'); %Loads Q
 end
-
 %% Import a seq file to compute SAR for
-seq.read(seq_path); %Import the seq file you want to check; alternately you can perform the check in the sequence code.
+system = mr.opts('MaxGrad', 32, 'GradUnit', 'mT/m', ...
+    'MaxSlew', 130, 'SlewUnit', 'T/m/s', 'rfRingdownTime', 30e-6, ...
+    'rfDeadTime', 100e-6);
+seq=mr.Sequence(system);
+seq.read('160_tse500ms.seq'); %Import the seq file you want to check; alternately you can perform the check in the sequence code.
 
 %% Identify RF blocks and compute SAR - 10 seconds must be less than twice and 6 minutes must be less than 4 (WB) and 3.2 (head-20)
 obj = seq;
@@ -120,12 +75,13 @@ T_scan = t_vec(end); %find a better way to get to end of scan time
 idx = find(abs(SARwbg_vec) > 0);
 SARwbg_vec = squeeze(SARwbg_vec(idx));
 SARhg_vec = squeeze(SARhg_vec(idx));
+t_vec = squeeze(t_vec(idx));
   
   
 %% Time averaged RF power - match Siemens data
 RFwbg_tavg = sum(SARwbg_vec)./T_scan./SiemensB1fact;
 RFhg_tavg = sum(SARhg_vec)./T_scan./SiemensB1fact;
-disp(['Time averaged RF power-Siemens is - Body: ', num2str(RFwbg_tavg),'W &  Head: ', num2str(RFhg_tavg), 'W']);
+disp(['Time averaged RF power for Siemens is - Body: ', num2str(RFwbg_tavg),'W  Head: ', num2str(RFhg_tavg), 'W']);
 
 
 
@@ -134,12 +90,45 @@ SARwbg = max(SARwbg_vec);
 SARwbg_pred = SARwbg.* sqrt(Wbody_weight/Sample_weight).*GEB1fact;
 disp(['Predicted SAR-GE is ', num2str(SARwbg_pred), 'W/kg'])
 
- %% Check for each instant of the time averaged SAR with appropriate time limits
- if(sum(SARwbg_pred > TenSecThresh_wbg))
-         error('Pulse sequence exceeding 10 second Global SAR limits, increase TR');
- end
 
 
+
+
+%  %% Interpolate SAR - Pictorial representation only 
+%  tsec = 1:t_vec(end);
+% [SARwbg_lim_s] = interp1(t_vec, SARwbg_vec, tsec,'spline'); %< 2 SARmax
+% [SARhg_lim_s] = interp1(t_vec, SARhg_vec, tsec,'spline'); %< 2 SARmax
+% 
+% figure(101); plot(t_vec, SARwbg_vec); hold on;
+% SARwbg_lim_s(SARwbg_lim_s < 0) = 0;
+% SARhg_lim_s(SARhg_lim_s < 0) = 0;
+% 
+% plot(tsec, SARwbg_lim_s); hold on;
+% plot(tsec, SARhg_lim_s); hold on;
+% legend('Whole body', 'Head only');
+% %% Calculate time averaged SAR 1 -N, better to do -N/2 to N/2
+%  SAR_wbg_tensec = do_sw_sar(SARwbg_lim_s,tsec, 10);%< 2 SARmax
+%  SAR_wbg_sixmin = do_sw_sar(SARwbg_lim_s,tsec, 600);
+%  
+%  SAR_hg_tensec = do_sw_sar(SARhg_lim_s,tsec, 10);%< 2 SARmax
+%  SAR_hg_sixmin = do_sw_sar(SARhg_lim_s,tsec, 600);
+%  
+% figure(102); 
+% plot(tsec, SAR_wbg_tensec); hold on;
+% plot(tsec, SAR_hg_tensec); hold on;
+% legend('Whole body', 'Head only');
+% 
+%  %% Check for each instant of the time averaged SAR with appropriate time limits
+%  if(sum(SAR_wbg_tensec > TenSecThresh_wbg)|| sum(SAR_hg_tensec > TenSecThresh_hg))
+%          error('Pulse exceeding 10 second Global SAR limits, increase TR');
+%  end
+%  
+%   if(sum(SAR_hg_sixmin > SixMinThresh_wbg)|| sum(SAR_hg_sixmin > SixMinThresh_hg))
+%          error('Pulse exceeding 10 second Global SAR limits, increase TR');
+%  end
+%  
+%  
+%  
 
 
 
