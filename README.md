@@ -34,5 +34,5 @@ Run the SAR4seq.m to:
        Time averaged RF power : double
        Whole body SAR : double
             
-       
+  2.  Providing no inputs computes SAR for a Turbo Spin Echo sequence with default system hardware parameters and sample weight
 
