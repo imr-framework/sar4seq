@@ -3,7 +3,7 @@ layout: page
 title: sar4seq
 ---
 
-Prerequisite:
+### Prerequisite:
 
 Installed Matlab R2015a or later
 
