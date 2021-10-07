@@ -9,7 +9,7 @@ Installed Matlab R2015a or later
 
 Let us know if you face any problems in running the code or validating calculated values by posting in Issues.
 
-
+This code implements the methods and corresponding results shown in Geethanath, S., Kabil, J. and Vaughan, J.T., 2020. Radio Frequency Safety Assessment for Open Source Pulse Sequence Programming. Safety and Biological Effects in MRI, p.207.
 
 ### Demos
 
