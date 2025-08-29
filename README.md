@@ -118,7 +118,7 @@ sar4seq_python/
 
 ## License
 
-Copyright of the Board of Trustees of Columbia University in the City of New York
+Copyright of the Board of Trustees of Johns Hopkins University
 
 ## Contributing
 
