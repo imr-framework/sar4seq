@@ -127,4 +127,6 @@ Please read CONTRIBUTING.md for details on our code of conduct and the process f
 ## Authors
 
 - Original MATLAB implementation: Sairam Geethanath, Ph.D.
+- Python translation, Leo Kinyera, B.S.
+- Python code review, Sairam Geethanath, Ph.D.
 
