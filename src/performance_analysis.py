@@ -10,7 +10,7 @@ import time
 import numpy as np
 import pypulseq as pp
 from src.sar4seq import SAR4seq
-from src.gen_seq_test import create_test_sequence, create_advanced_test_sequence
+from src.utils.gen_seq_test import create_test_sequence, create_advanced_test_sequence
 
 
 def create_large_sequence(num_rf_pulses=100):

@@ -1,0 +1,107 @@
+# Directories
+vop_results/
+__pycache__/
+.pytest_cache/
+.coverage/
+htmlcov/
+dist/
+build/
+*.egg-info/
+.venv/
+venv/
+env/
+ENV/
+
+# MATLAB files
+*.asv
+*.m~
+slprj/
+*.slxc
+*.mexw32
+*.mexw64
+*.mexa64
+*.mexmaci64
+*.mat.bak
+
+# Python files
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Data files (optional - uncomment if you don't want to track large data files)
+# *.dat
+# *.csv
+# *.h5
+# *.hdf5
+# *.nc
+# *.nii
+# *.nii.gz
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Documentation builds
+docs/_build/
+docs/build/
+site/
+
+# Testing
+.coverage
+.pytest_cache/
+.tox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Package managers
+node_modules/
+package-lock.json
+yarn.lock
+
+# Results and output directories
+results/
+output/
+figures/
+plots/

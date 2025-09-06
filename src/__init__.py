@@ -1,22 +1,92 @@
 """
-SAR4seq source module
+SAR4seq - Comprehensive SAR Computation and Safety Assessment
 
-Contains the core implementation of SAR4seq functionality.
+A complete toolkit for MRI sequence SAR calculation, clinical safety assessment,
+and GPU-accelerated computation.
+
+Authors: Leo Kinyera, BS
+Copyright: Board of Trustees of Columbia University in the City of New York
 """
 
-# Import modules with error handling for optional dependencies
+# Utility modules
+from .utils.sar_computation import (
+    calculate_sar_uncompressed,
+    calculate_sar_vop_compressed,
+    calculate_time_averaged_sar
+)
+
+from .utils.clinical_assessment import (
+    assess_clinical_safety,
+    generate_clinical_report,
+    check_pediatric_safety
+)
+
+from .utils.sequence_analysis import (
+    parse_sequence_file,
+    analyze_rf_characteristics,
+    validate_sequence_for_sar
+)
+
+from .utils.gpu_utils import (
+    check_gpu_availability,
+    benchmark_gpu_performance,
+    setup_gpu_computation
+)
+
+from .utils.read_qmat import (
+    load_q_matrix_with_validation,
+    validate_q_matrix,
+    load_vop_compression_data
+)
+
+from utils.constants import CLINICAL_CONSTANTS, TISSUE_PROPERTIES
+
+# Legacy import with error handling
 try:
     from .sar4seq import SAR4seq
-    __all__ = ['SAR4seq']
-except ImportError as e:
-    print(f"Warning: Could not import SAR4seq: {e}")
-    __all__ = []
+except ImportError:
+    # Legacy module not available
+    SAR4seq = None
 
-try:
-    from .q_mat_gen import Q_mat_gen
-    __all__.append('Q_mat_gen')
-except ImportError as e:
-    print(f"Warning: Could not import Q_mat_gen: {e}")
+# Version info
+__version__ = "2.0.0"
+__author__ = "Leo Kinyera, BS"
+__email__ = "leokinyera81@gmail.com"
 
-# Export what was successfully imported
-globals().update({name: globals()[name] for name in __all__ if name in globals()})
+__all__ = [
+    # Main interface
+    'SAR4SeqProcessor',
+    'main_sar_computation',
+    
+    # SAR computation
+    'calculate_sar_uncompressed',
+    'calculate_sar_vop_compressed',
+    'calculate_time_averaged_sar',
+    
+    # Clinical assessment
+    'assess_clinical_safety',
+    'generate_clinical_report',
+    'check_pediatric_safety',
+    
+    # Sequence analysis
+    'parse_sequence_file',
+    'analyze_rf_characteristics',
+    'validate_sequence_for_sar',
+    
+    # GPU utilities
+    'check_gpu_availability',
+    'benchmark_gpu_performance',
+    'setup_gpu_computation',
+    
+    # Data loading
+    'load_q_matrix_with_validation',
+    'validate_q_matrix',
+    'load_vop_compression_data',
+    
+    # Constants
+    'CLINICAL_CONSTANTS',
+    'TISSUE_PROPERTIES',
+    
+    # Legacy
+    'SAR4seq'
+]

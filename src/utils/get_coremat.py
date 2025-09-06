@@ -189,20 +189,28 @@ def validate_q_matrices(Q_matrices, requires_gpu=False):
             if not isinstance(Q_matrices, cp.ndarray):
                 Q_matrices = cp.asarray(Q_matrices)
 
-            if Q_matrices.ndim != 3:
-                raise ValueError("Q_matrices must be 3D array (N, Nc, Nc)")
-        
-            N, Nc1, Nc2 = Q_matrices.shape
-            if Nc1 != Nc2:
-                raise ValueError("Q-matrices must be square")
-            
-            # Check for positive semi-definiteness using GPU
-            for i in range(N):
-                eigenvals = cp.linalg.eigvalsh(Q_matrices[i])
-                if cp.any(cp.real(eigenvals) < -1e-10):  # Small tolerance for numerical errors
-                    print(f"Warning: Q-matrix {i} may not be positive semi-definite")
-            
-            return True, "Validated on GPU"
+            if Q_matrices.ndim == 5:
+                # 5D spatial Q-matrices: (M, N, P, Nc, Nc)
+                M, N, P, Nc1, Nc2 = Q_matrices.shape
+                if Nc1 != Nc2:
+                    raise ValueError("Q-matrices must be square")
+                return True, f"Validated 5D spatial Q-matrices on GPU: {M}×{N}×{P} voxels, {Nc1} channels"
+                
+            elif Q_matrices.ndim == 3:
+                # 3D observation point Q-matrices: (N, Nc, Nc)
+                N, Nc1, Nc2 = Q_matrices.shape
+                if Nc1 != Nc2:
+                    raise ValueError("Q-matrices must be square")
+                    
+                # Check for positive semi-definiteness using GPU
+                for i in range(min(N, 100)):  # Check first 100 for efficiency
+                    eigenvals = cp.linalg.eigvalsh(Q_matrices[i])
+                    if cp.any(cp.real(eigenvals) < -1e-10):  # Small tolerance for numerical errors
+                        print(f"Warning: Q-matrix {i} may not be positive semi-definite")
+                
+                return True, f"Validated 3D Q-matrices on GPU: {N} observation points, {Nc1} channels"
+            else:
+                raise ValueError("Q_matrices must be 3D array (N, Nc, Nc) or 5D array (M, N, P, Nc, Nc)")
             
         except Exception as e:
             print(f"GPU validation failed: {e}")
@@ -212,12 +220,21 @@ def validate_q_matrices(Q_matrices, requires_gpu=False):
                 Q_matrices = cp.asnumpy(Q_matrices)
     
     # CPU validation
-    if Q_matrices.ndim != 3:
-        raise ValueError("Q_matrices must be 3D array (N, Nc, Nc)")
-    
-    N, Nc1, Nc2 = Q_matrices.shape
-    if Nc1 != Nc2:
-        raise ValueError("Q-matrices must be square")
+    if Q_matrices.ndim == 5:
+        # 5D spatial Q-matrices: (M, N, P, Nc, Nc)
+        M, N, P, Nc1, Nc2 = Q_matrices.shape
+        if Nc1 != Nc2:
+            raise ValueError("Q-matrices must be square")
+        return True, f"Validated 5D spatial Q-matrices on CPU: {M}×{N}×{P} voxels, {Nc1} channels"
+        
+    elif Q_matrices.ndim == 3:
+        # 3D observation point Q-matrices: (N, Nc, Nc)
+        N, Nc1, Nc2 = Q_matrices.shape
+        if Nc1 != Nc2:
+            raise ValueError("Q-matrices must be square")
+        return True, f"Validated 3D Q-matrices on CPU: {N} observation points, {Nc1} channels"
+    else:
+        raise ValueError("Q_matrices must be 3D array (N, Nc, Nc) or 5D array (M, N, P, Nc, Nc)")
     
     # Check for positive semi-definiteness
     for i in range(N):

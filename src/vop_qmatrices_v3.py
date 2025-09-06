@@ -84,9 +84,9 @@ def VOP_Qmatrices_v3(Q_local_file=None, Q_local_data=None, max_vops=500, Nc=8, r
         Qavg = Q_local_data
     elif Q_local_file is not None:
         try:
-            from src.utils.read_qmat import read_qmat
+            from utils.read_qmat import read_qmat
         except ImportError:
-            from src.utils.read_qmat import read_qmat
+            from utils.read_qmat import read_qmat
         Qavg = read_qmat(Q_local_file)
     else:
         raise ValueError("Must provide either Q_local_file or Q_local_data")
@@ -214,7 +214,14 @@ def VOP_Qmatrices_v3(Q_local_file=None, Q_local_data=None, max_vops=500, Nc=8, r
             try:
                 # Spectral decomposition
                 Q_diff = A - Q_ind[ind_sorta[q-1], :, :]
-                eigenvals, V = xp.linalg.eig(Q_diff)
+                # Use eigh for Hermitian matrices when using CuPy, eig for general case with NumPy
+                if requires_gpu and xp == cp:
+                    # Ensure Q_diff is Hermitian for eigh
+                    Q_diff = (Q_diff + Q_diff.conj().T) / 2
+                    eigenvals, V = xp.linalg.eigh(Q_diff)
+                else:
+                    # Use numpy's eig for CPU computation
+                    eigenvals, V = np.linalg.eig(Q_diff)
                 
                 # Create E+ and E-
                 Ep = eigenvals.copy()
@@ -238,6 +245,7 @@ def VOP_Qmatrices_v3(Q_local_file=None, Q_local_data=None, max_vops=500, Nc=8, r
                         ind_sorta_cpu = cp.asnumpy(ind_sorta) if isinstance(ind_sorta, cp.ndarray) else ind_sorta
                         
                         Q_diff_cpu = A_cpu - Q_ind_cpu[ind_sorta_cpu[q-1], :, :]
+                        # For CPU fallback, always use numpy's eig since it handles general matrices
                         eigenvals_cpu, V_cpu = np.linalg.eig(Q_diff_cpu)
                         
                         Ep_cpu = eigenvals_cpu.copy()

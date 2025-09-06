@@ -1,19 +1,16 @@
 [project]
 name = "sar4seq-python"
 version = "0.1.0"
-description = "Add your description here"
+description = "This is the translated sar4seq program. It was originally written in Matlab by Sairam Geethanath, PhD"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
+    "colorama>=0.4.6",
     "cupy-cuda12x>=13.6.0",
     "h5py>=3.14.0",
     "matplotlib>=3.9.4",
     "numpy>=2.0.2",
     "pypulseq>=1.4.2.post1",
+    "rich>=14.1.0",
     "scipy>=1.13.1",
-]
-
-[dependency-groups]
-dev = [
-    "pytest>=8.4.1",
 ]

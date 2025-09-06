@@ -9,6 +9,19 @@ import time
 from concurrent.futures import ProcessPoolExecutor
 import multiprocessing as mp
 
+# Fix import to use relative import
+try:
+    from .read_qmat import load_tissue_data
+except ImportError:
+    # Fallback for when run as script
+    try:
+        from read_qmat import load_tissue_data
+    except ImportError:
+        # Define a stub function if import fails
+        def load_tissue_data():
+            print("Warning: Could not import load_tissue_data, using placeholder")
+            return None, None
+
 try:
     from .gen_e12ptq import gen_E12ptQ
     from .chkcubair_global import chkcubair_global
@@ -244,3 +257,130 @@ def validate_em_fields(Ex, Ey, Ez):
         print(f"Warning: Very large field values detected (max: {max_field:.2e})")
     
     return True
+
+
+def create_full_resolution_qmatrix(n_spatial_points, n_channels, base_coupling=1e-6, use_tissue_data=True):
+    """
+    Create a full spatial resolution Q-matrix for SAR computation
+    
+    Parameters:
+    -----------
+    n_spatial_points : int
+        Number of spatial points (voxels)
+    n_channels : int
+        Number of RF channels
+    base_coupling : float
+        Base electromagnetic coupling strength
+    use_tissue_data : bool
+        Whether to use realistic tissue data from .mat file
+        
+    Returns:
+    --------
+    Q_full : numpy.ndarray
+        Full resolution Q-matrix with shape (n_spatial_points, n_channels, n_channels)
+    """
+    
+    print(f"Creating full-resolution Q-matrix...")
+    print(f"  Spatial points: {n_spatial_points}")
+    print(f"  RF channels: {n_channels}")
+    print(f"  Total elements: {n_spatial_points * n_channels * n_channels:,}")
+    
+    # Initialize Q-matrix
+    Q_full = np.zeros((n_spatial_points, n_channels, n_channels), dtype=complex)
+    
+    if use_tissue_data:
+        # Load realistic tissue data
+        tissue_data, tissue_properties = load_tissue_data()
+        
+        if tissue_data is not None and tissue_properties is not None:
+            print(f"  Using realistic tissue electromagnetic properties")
+            
+            # Flatten tissue data for sampling
+            tissue_flat = tissue_data.flatten()
+            total_voxels = len(tissue_flat)
+            
+            # Sample voxels from tissue data
+            if n_spatial_points <= total_voxels:
+                # Subsample tissue data
+                indices = np.random.choice(total_voxels, n_spatial_points, replace=False)
+                sampled_tissues = tissue_flat[indices]
+            else:
+                # Repeat tissue data if we need more points
+                repeat_factor = (n_spatial_points // total_voxels) + 1
+                extended_tissues = np.tile(tissue_flat, repeat_factor)
+                sampled_tissues = extended_tissues[:n_spatial_points]
+            
+            # Create Q-matrix based on tissue properties
+            for k in range(n_spatial_points):
+                tissue_type = int(np.real(sampled_tissues[k]))
+                
+                # Get tissue properties or use default for unknown types
+                if tissue_type in tissue_properties:
+                    props = tissue_properties[tissue_type]
+                    conductivity = props['conductivity']
+                    permittivity = props['permittivity']
+                else:
+                    # Default to air properties for unknown tissue types
+                    conductivity = 0.0
+                    permittivity = 1.0
+                
+                # Calculate coupling strength based on tissue properties
+                # Higher conductivity and permittivity lead to stronger coupling
+                coupling_strength = base_coupling * (1 + conductivity * 10 + permittivity * 0.1)
+                
+                # Create Q-matrix for this voxel with realistic channel coupling
+                for i in range(n_channels):
+                    for j in range(n_channels):
+                        if i == j:
+                            # Self-coupling (stronger)
+                            Q_full[k, i, j] = coupling_strength * (1.0 + 0.1j)
+                        else:
+                            # Cross-coupling (weaker, varies by channel separation)
+                            separation_factor = abs(i - j) / n_channels
+                            cross_coupling = coupling_strength * (0.3 + 0.05j) * (1 - separation_factor * 0.5)
+                            Q_full[k, i, j] = cross_coupling
+                
+                # Progress reporting
+                if (k + 1) % (n_spatial_points // 20) == 0:  # Report every 5%
+                    progress = (k + 1) / n_spatial_points * 100
+                    tissue_name = tissue_properties.get(tissue_type, {}).get('name', f'Type_{tissue_type}')
+                    print(f"    Progress: {progress:.1f}% - Processing tissue type {tissue_type}")
+            
+        else:
+            print(f"  Tissue data not available, using synthetic model")
+            use_tissue_data = False
+    
+    if not use_tissue_data:
+        # Fall back to synthetic Q-matrix model
+        print(f"  Using synthetic electromagnetic coupling model")
+        
+        # Create realistic spatial variation
+        np.random.seed(42)  # For reproducible results
+        
+        for k in range(n_spatial_points):
+            # Simulate spatial variation in tissue properties
+            spatial_factor = 1.0 + 0.5 * np.sin(k * 2 * np.pi / n_spatial_points)
+            coupling_strength = base_coupling * spatial_factor
+            
+            # Create Q-matrix for this spatial location
+            for i in range(n_channels):
+                for j in range(n_channels):
+                    if i == j:
+                        # Self-coupling
+                        Q_full[k, i, j] = coupling_strength * (1.0 + 0.1j)
+                    else:
+                        # Cross-coupling decreases with channel separation
+                        separation = abs(i - j)
+                        cross_coupling = coupling_strength * (0.5 + 0.05j) / (1 + separation * 0.2)
+                        Q_full[k, i, j] = cross_coupling
+            
+            # Progress reporting for synthetic model
+            if (k + 1) % (n_spatial_points // 10) == 0:  # Report every 10%
+                progress = (k + 1) / n_spatial_points * 100
+                print(f"    Progress: {progress:.1f}%")
+    
+    # Report memory usage
+    memory_mb = Q_full.nbytes / (1024 * 1024)
+    print(f"  Q-matrix memory usage: {memory_mb:.1f} MB")
+    
+    return Q_full
