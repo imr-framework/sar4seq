@@ -315,9 +315,14 @@ def load_tissue_data():
         return None, None
     
 
-def load_clinical_qmatrices():
+def load_clinical_qmatrices(qmat=None):
     """
     Load Q-matrices for clinical SAR computation
+    
+    Parameters
+    ----------
+    qmat : str, optional
+        Path to Q-matrix file. If None, will search default locations.
     
     Returns
     -------
@@ -327,12 +332,16 @@ def load_clinical_qmatrices():
     
     print("\n🔬 Loading Q-matrices for clinical assessment...")
     
-    # Try to load existing Q-matrices
-    qmat_paths = [
-        Path(__file__).parent / 'test_qmat.mat',
-        Path(__file__).parent.parent / 'data' / 'Qmat.mat',
-        Path(__file__).parent.parent / 'data' / 'QGlobal.mat'
-    ]
+    # If specific Q-matrix path provided, use it first
+    if qmat is not None:
+        qmat_paths = [Path(qmat)]
+    else:
+        # Try to load existing Q-matrices from default locations
+        qmat_paths = [
+            Path(__file__).parent / 'test_qmat.mat',
+            Path(__file__).parent.parent / 'data' / 'Qmat.mat',
+            Path(__file__).parent.parent / 'data' / 'QGlobal.mat'
+        ]
     
     Q_matrices = {}
     
@@ -356,6 +365,13 @@ def load_clinical_qmatrices():
                     
             except Exception as e:
                 print(f"  ⚠️  Error loading {qmat_path.name}: {e}")
+                continue
+        else:
+            if qmat is not None:
+                # If specific path was provided but doesn't exist, raise error
+                raise FileNotFoundError(f"Specified Q-matrix file not found: {qmat}")
+            else:
+                # If default path doesn't exist, just continue searching
                 continue
     
     # Create default Q-matrices if none found
@@ -633,3 +649,6 @@ __all__ = getattr(__import__(__name__), '__all__', []) + [
     'validate_q_matrix', 
     'load_vop_compression_data'
 ]
+
+if __name__ == '__main__':
+    Q_matrices = load_clinical_qmatrices(qmat='/lhome/ext/i3m121/i3m1211/SAR/SAR4seq_python/data/Qmat.mat')

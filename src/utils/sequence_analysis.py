@@ -4,9 +4,6 @@ Pulse Sequence Analysis Functions
 
 Contains functions for processing and analyzing MRI pulse sequences,
 including RF pulse extraction, timing analysis, and sequence validation.
-
-Authors: Leo Kinyera, BS
-Copyright: Board of Trustees of Columbia University in the City of New York
 """
 
 import numpy as np

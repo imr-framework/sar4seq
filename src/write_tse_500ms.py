@@ -8,18 +8,19 @@ import numpy as np
 import pypulseq as pp
 
 
-def write_TSE_500ms(output_filename='tse_500ms.seq'):
+def write_TSE_50s(output_filename='tse_50s.seq'):
     """
     Create a TSE sequence and export for execution
     
     This function creates a Turbo Spin Echo sequence similar to the MATLAB version
     with the following specifications:
-    - TR = 500ms
+    - TR = 3.2s
     - TE_eff = 60ms  
     - Echo train length = 16
-    - Matrix size = 128x128
+    - Matrix size = 128x256
     - FOV = 256mm
     - Slice thickness = 5mm
+    - Total scan time = ~50s
     
     Parameters
     ----------
@@ -32,7 +33,7 @@ def write_TSE_500ms(output_filename='tse_500ms.seq'):
         The created sequence object
     """
     
-    print("Creating TSE sequence with 500ms TR")
+    print("Creating TSE sequence with ~50s total scan time")
     
     # System gradient limits
     dG = 250e-6
@@ -50,14 +51,14 @@ def write_TSE_500ms(output_filename='tse_500ms.seq'):
     # Sequence parameters
     fov = 256e-3  # Field of view (m)
     Nx = 128      # Matrix size x
-    Ny = 128      # Matrix size y
+    Ny = 256      # Matrix size y (increased for longer scan)
     necho = 16    # Echo train length
     Nslices = 1   # Number of slices
     
     rf_flip = 120  # Flip angle (degrees)
     slice_thickness = 5e-3  # Slice thickness (m)
     TE = 12e-3    # Echo spacing (s)
-    TR = 500e-3   # Repetition time (s)
+    TR = 3.2      # Repetition time (s) - increased for ~50s total scan time
     TE_eff = 60e-3  # Effective echo time (s)
     
     # RF flip angles for echo train
@@ -359,7 +360,7 @@ def write_custom_TSE(TR=500e-3, TE_eff=60e-3, necho=16, Nx=128, Ny=128,
 
 if __name__ == "__main__":
     # Create default TSE sequence
-    seq = write_TSE_500ms()
+    seq = write_TSE_50s()
     
     # Create custom TSE sequence
     custom_seq = write_custom_TSE(

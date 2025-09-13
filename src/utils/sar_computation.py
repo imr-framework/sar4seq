@@ -4,9 +4,6 @@ Core SAR Computation Functions
 
 Contains the fundamental SAR calculation algorithms for both full-resolution
 and VOP-compressed Q-matrices, including GPU-optimized implementations.
-
-Authors: Leo Kinyera, BS
-Copyright: Board of Trustees of Columbia University in the City of New York
 """
 
 import numpy as np

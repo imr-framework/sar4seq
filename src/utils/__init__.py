@@ -6,7 +6,7 @@ Contains utility functions for SAR calculations and Q-matrix operations.
 
 # Import new modular utilities (safe imports)
 try:
-    from .clinical_constants import CLINICAL_CONSTANTS, TISSUE_PROPERTIES
+    from .constants import CLINICAL_CONSTANTS, TISSUE_PROPERTIES
     from .sar_computation import (
         calculate_sar_uncompressed,
         calculate_sar_vop_compressed,

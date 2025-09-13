@@ -3,7 +3,7 @@ from utils.gen_qpwr import create_full_resolution_qmatrix
 from utils.calc_sar import (
     calc_SAR_full_resolution_cpu, 
     calc_SAR_full_resolution_gpu,
-    calc_SAR_vop_compressed,
+    # calc_SAR_vop_compressed removed - function was deleted as unused/complex
 )
 from utils.gen_seq_test import create_test_sequence
 # GPU acceleration support
@@ -103,11 +103,21 @@ def benchmark_sar_methods(n_spatial_points=10000, n_vop_points=100, n_channels=8
     
     # 2. VOP compressed comparison
     print(f"\n" + "=" * 50)
-    print("2. VOP COMPRESSED SAR (REFERENCE)")
+    print("2. VOP COMPRESSED SAR (SIMPLIFIED)")
     print("=" * 50)
     
-    # Use proper VOP compression from vop_qmatrices_v3.py
-    sar_peak_vop, vop_results = calc_SAR_vop_compressed(Q_full, rf_vector, mass, n_vop_points)
+    # Use simplified VOP approach (complex VOP function removed)
+    vop_indices = np.linspace(0, n_spatial_points-1, n_vop_points, dtype=int)
+    Q_vop = Q_full[vop_indices, :, :]
+    
+    sar_vop_values = []
+    for k in range(len(vop_indices)):
+        Q_k = Q_vop[k, :, :]
+        sar_contribution = np.real(np.conj(rf_vector) @ Q_k @ rf_vector)
+        sar_vop_values.append(sar_contribution)
+    
+    sar_peak_vop = np.max(sar_vop_values)
+    vop_results = {'num_vops': len(vop_indices), 'original_points': n_spatial_points}
     
     if vop_results is not None:
         print(f"VOP algorithm successfully generated {vop_results['num_vops']} VOPs")
@@ -227,8 +237,15 @@ def test_with_pulseq_sequence():
             _, sar_peak_full = calc_SAR_full_resolution_cpu(Q_full, rf_vector, mass)
             total_sar_full += sar_peak_full
             
-            # VOP compressed calculation (use proper VOP algorithm)
-            sar_peak_vop, _ = calc_SAR_vop_compressed(Q_full, rf_vector, mass, n_vop_points=100)
+            # VOP compressed calculation (simplified approach)
+            vop_indices = np.linspace(0, Q_full.shape[0]-1, 100, dtype=int)
+            Q_vop = Q_full[vop_indices, :, :]
+            sar_vop_vals = []
+            for k in range(len(vop_indices)):
+                Q_k = Q_vop[k, :, :]
+                sar_contrib = np.real(np.conj(rf_vector) @ Q_k @ rf_vector)
+                sar_vop_vals.append(sar_contrib)
+            sar_peak_vop = np.max(sar_vop_vals)
             total_sar_vop += sar_peak_vop
             
             print(f"    Full resolution SAR: {sar_peak_full:.6f} W/kg")

@@ -4,15 +4,12 @@ Clinical Safety Assessment Functions
 
 Contains functions for evaluating SAR against clinical safety limits,
 generating compliance reports, and performing safety assessments.
-
-Authors: Leo Kinyera, BS
-Copyright: Board of Trustees of Columbia University in the City of New York
 """
 
 import numpy as np
 from typing import Dict, Any, List
 import warnings
-from constants import CLINICAL_CONSTANTS
+from utils.constants import CLINICAL_CONSTANTS
 
 def assess_clinical_safety(sar_results: Dict[str, Any],
                           patient_weight: float = None,

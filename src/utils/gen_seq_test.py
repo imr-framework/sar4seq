@@ -3,8 +3,6 @@ Test sequence generation for SAR4seq
 
 This module provides functions to generate simple Pulseq sequences for testing
 SAR calculation functionality when no sequence file is available.
-
-Copyright of the Board of Trustees of Columbia University in the City of New York
 """
 
 import numpy as np

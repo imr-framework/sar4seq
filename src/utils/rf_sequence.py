@@ -53,9 +53,7 @@ def create_rf_vector(rf_block, n_channels):
     
     signal = rf_block['rf_signal']
     
-    # Use realistic RF amplitude scaling (µT to be converted to appropriate units)
-    # Typical clinical RF amplitudes are 10-50 µT for body coils
-    rf_scale = 1.0  # Remove the 0.01 scaling that was making SAR too small
+    rf_scale = 1.0
     
     if hasattr(signal, '__len__'):
         if len(signal) == 1:
