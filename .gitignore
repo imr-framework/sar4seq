@@ -23,6 +23,8 @@ slprj/
 *.mexmaci64
 *.mat.bak
 
+*.seq
+
 # Python files
 *.pyc
 *.pyo

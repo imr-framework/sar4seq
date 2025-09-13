@@ -190,7 +190,7 @@ def sar4seq(seq_path: str, Q_mat_path: str, requires_gpu: bool = False, n_spatia
     }
 
 if __name__ == '__main__':
-    seq_path = '/lhome/ext/i3m121/i3m1211/SAR/SAR4seq_python/balanced_low_sar_tse.seq'
-    Q_mat_path = '/lhome/ext/i3m121/i3m1211/SAR/SAR4seq_python/data/QGlobal.mat'
+    seq_path = '/home/maxi/Desktop/sar4seq/tse_50s.seq'
+    Q_mat_path = '/home/maxi/Desktop/sar4seq/data/QGlobal.mat'
 
     results = sar4seq(seq_path, Q_mat_path, requires_gpu=False, n_spatial=100000)
